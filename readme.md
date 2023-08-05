@@ -8,6 +8,7 @@ Similar to [Dungeon Report](https://dungeon.report/) and [Raid Report](https://r
 
 ## Development
 This is purely a passion project developed by someone who spends too much time on Destiny 2.
+
 Don't expect huge jumps and/or tons of new features, but the project will be improved over time.
 
 ## Can i contribute?
