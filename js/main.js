@@ -403,7 +403,7 @@ async function fetchFullEmblem(hash) {
         }
     })
     let json = await response.json()
-    return 'http://bungie.net' + json.Response.secondarySpecial
+    return 'https://bungie.net' + json.Response.secondarySpecial
 }
 
 function generateSectors(data) {
