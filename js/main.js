@@ -366,7 +366,7 @@ async function searchBungieUser(id) {
     let json = await response.json()
 
     // Check if ID exists
-    if (json.Response.length > 0) {
+    if (json.Response && json.Response.length > 0) {
         getProfileData(json.Response[0].membershipId, json.Response[0].membershipType)
     } else {
         alert('No user found.')
