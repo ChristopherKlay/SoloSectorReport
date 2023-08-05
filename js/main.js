@@ -290,8 +290,6 @@ async function getProfileData(membershipId, membershipType) {
     })
     let json = await response.json()
 
-    console.log(data)
-
     // Get profile data
     data.profile.name = json.Response.profile.data.userInfo.bungieGlobalDisplayName
     data.profile.tag = json.Response.profile.data.userInfo.bungieGlobalDisplayNameCode
