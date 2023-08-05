@@ -399,7 +399,7 @@ async function getProfileData(membershipId, membershipType) {
     // Log full player data
     console.groupCollapsed('Player Data: ' + data.profile.name + '#' + data.profile.tag)
     console.log(data)
-    console.groupEnd
+    console.groupEnd()
 }
 
 async function searchBungieUser(id) {
@@ -412,6 +412,7 @@ async function searchBungieUser(id) {
 
     // Check if ID exists
     if (json.Response && json.Response.length > 0) {
+        document.querySelector('sectors').replaceChildren()
         getProfileData(json.Response[0].membershipId, json.Response[0].membershipType)
     } else {
         alert('No user found.')
