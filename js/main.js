@@ -14,7 +14,8 @@ if (debug) {
 }
 
 // Main Storage
-var data = {
+var data = {}
+var template = {
     profile: {},
     statistic: {
         legend: {
@@ -289,6 +290,8 @@ async function getProfileData(membershipId, membershipType) {
     })
     let json = await response.json()
 
+    console.log(data)
+
     // Get profile data
     data.profile.name = json.Response.profile.data.userInfo.bungieGlobalDisplayName
     data.profile.tag = json.Response.profile.data.userInfo.bungieGlobalDisplayNameCode
@@ -412,8 +415,14 @@ async function searchBungieUser(id) {
 
     // Check if ID exists
     if (json.Response && json.Response.length > 0) {
+        // Create new clone of template
+        data = JSON.parse(JSON.stringify(template))
+
+        // Remove sectors content
         document.querySelector('sectors').replaceChildren()
-        getProfileData(json.Response[0].membershipId, json.Response[0].membershipType)
+
+        // Fetch new player data
+        await getProfileData(json.Response[0].membershipId, json.Response[0].membershipType)
     } else {
         alert('No user found.')
         document.querySelector('header').style.background = 'none'
