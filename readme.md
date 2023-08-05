@@ -1,4 +1,4 @@
-# SoloSectorReport
+# Solo Sector Report
 
 ## Live Version
 [SoloSectorReport](https://christopherklay.github.io/SoloSectorReport/)
