@@ -4,7 +4,8 @@
 <head>
   <meta charset="UTF-8">
   <title>Solo Sector Report</title>
-
+  <link rel="icon" type="image/png"
+    href="https://www.bungie.net/common/destiny2_content/icons/0e096fc6af03d3692950c8bf6e015b67.png" />
   <link rel="stylesheet" href="css/style.css">
 </head>
 
@@ -15,7 +16,7 @@
     <img src="https://www.bungie.net/common/destiny2_content/icons/0e096fc6af03d3692950c8bf6e015b67.png">
     <span>Solo Sector Report</span>
     <form id="searchbar" onsubmit="performSearch(this); return false;">
-      <input type="text" id="search" placeholder="Search Bungie ID.." pattern=".{3,32}#[0-9]{4}"
+      <input type="text" required id="search" placeholder="Search Bungie ID.." pattern=".{3,32}#[0-9]{4}"
         oninvalid="this.setCustomValidity('Please enter a valid Bungie.net ID.')" oninput="this.setCustomValidity('')"">
     </form>
     <!-- <p class=" label">Username not found.</p> -->

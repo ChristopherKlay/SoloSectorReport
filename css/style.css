@@ -102,6 +102,10 @@ entry content row {
 	width: 90%;
 }
 
+entry content row:not(.th) {
+	font-weight: 100;
+}
+
 entry content cell {
 	flex: 1 0 33.33%;
 	margin: 0.2em 0 0.2em 0;

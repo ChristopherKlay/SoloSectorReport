@@ -6,6 +6,13 @@ var system = {
     }
 }
 
+// Debug & Testing
+var debug = false
+if (debug) {
+    // Replace api key for local hosting
+    system.api.key = '6e9f3a1c829c483f972d8b69f7483519'
+}
+
 // Main Storage
 var data = {
     profile: {},
@@ -282,8 +289,6 @@ async function getProfileData(membershipId, membershipType) {
     })
     let json = await response.json()
 
-    console.log(json)
-
     // Get profile data
     data.profile.name = json.Response.profile.data.userInfo.bungieGlobalDisplayName
     data.profile.tag = json.Response.profile.data.userInfo.bungieGlobalDisplayNameCode
@@ -302,6 +307,9 @@ async function getProfileData(membershipId, membershipType) {
         sectorData.push.apply(sectorData, requestData)
     }
 
+    // Player statistics
+    data.statistic.entered = sectorData.length
+
     // Loop runs
     for (var i = sectorData.length - 1; i >= 0; i--) {
         // Check if solo & completed
@@ -318,12 +326,12 @@ async function getProfileData(membershipId, membershipType) {
                         data.statistic[data.sectors[sector].difficulty].flawless = data.statistic[data.sectors[sector].difficulty].flawless + 1
                         data.sectors[sector].flawless = typeof data.sectors[sector].flawless !== 'undefined' ? data.sectors[sector].flawless + 1 : 1
 
-                        // Clear times (Flawless)
+                        // Clear time per pun (Flawless)
                         if (!data.sectors[sector].fastestFlawless || sectorData[i].values.timePlayedSeconds.basic.value < data.sectors[sector].fastest) {
                             data.sectors[sector].fastestFlawless = sectorData[i].values.timePlayedSeconds.basic.value
                         }
                     } else {
-                        // Clear times (Flawed)
+                        // Clear time per pun (Flawed)
                         if (!data.sectors[sector].fastest || sectorData[i].values.timePlayedSeconds.basic.value < data.sectors[sector].fastest) {
                             data.sectors[sector].fastest = sectorData[i].values.timePlayedSeconds.basic.value
                         }
@@ -334,7 +342,7 @@ async function getProfileData(membershipId, membershipType) {
                     data.sectors[sector].deaths = typeof data.sectors[sector].deaths !== 'undefined' ? data.sectors[sector].deaths + sectorData[i].values.deaths.basic.value : sectorData[i].values.deaths.basic.value
                     data.sectors[sector].timeTotal = typeof data.sectors[sector].timeTotal !== 'undefined' ? data.sectors[sector].timeTotal + sectorData[i].values.timePlayedSeconds.basic.value : sectorData[i].values.timePlayedSeconds.basic.value
 
-                    // Highest score
+                    // Highscore
                     if (!data.sectors[sector].highscore || sectorData[i].values.score.basic.value > data.sectors[sector].highscore) {
                         data.sectors[sector].highscore = sectorData[i].values.score.basic.value
                     }
@@ -350,11 +358,48 @@ async function getProfileData(membershipId, membershipType) {
         }
     }
 
+    // Overall data per difficulty
+    for (sector in data.sectors) {
+        // Fastest time
+        if (!data.statistic[data.sectors[sector].difficulty].fastest || data.sectors[sector].fastest < data.statistic[data.sectors[sector].difficulty].fastest) {
+            data.statistic[data.sectors[sector].difficulty].fastest = data.sectors[sector].fastest
+        }
+        if (!data.statistic[data.sectors[sector].difficulty].fastestFlawless || data.sectors[sector].fastest < data.statistic[data.sectors[sector].difficulty].fastestFlawless) {
+            data.statistic[data.sectors[sector].difficulty].fastestFlawless = data.sectors[sector].fastestFlawless
+        }
+
+        // Highest score
+        if (!data.statistic[data.sectors[sector].difficulty].highscore || data.sectors[sector].highscore > data.statistic[data.sectors[sector].difficulty].highscore) {
+            data.statistic[data.sectors[sector].difficulty].highscore = data.sectors[sector].highscore
+        }
+
+        // Total Time
+        if (data.sectors[sector].timeTotal) {
+            data.statistic.timeTotal = typeof data.statistic.timeTotal !== 'undefined' ? data.statistic.timeTotal + data.sectors[sector].timeTotal : data.sectors[sector].timeTotal
+        }
+
+        // Kills
+        if (data.sectors[sector].kills) {
+            data.statistic[data.sectors[sector].difficulty].kills = typeof data.statistic[data.sectors[sector].difficulty].kills !== 'undefined' ? data.statistic[data.sectors[sector].difficulty].kills + data.sectors[sector].kills : data.sectors[sector].kills
+        }
+
+        // Deaths
+        if (data.sectors[sector].deaths) {
+            data.statistic[data.sectors[sector].difficulty].deaths = typeof data.statistic[data.sectors[sector].difficulty].deaths !== 'undefined' ? data.statistic[data.sectors[sector].difficulty].deaths + data.sectors[sector].deaths : data.sectors[sector].deaths
+        }
+    }
+    // Efficiency
+    data.statistic.legend.efficiency = (data.statistic.legend.kills / data.statistic.legend.deaths).toFixed(2).replace(/[.,]00$/, '')
+    data.statistic.master.efficiency = (data.statistic.master.kills / data.statistic.master.deaths).toFixed(2).replace(/[.,]00$/, '')
+
     // Generate overview
-    generateSectors(data)
+    generatePlayerBadge()
+    generateSectors()
 
     // Log full player data
+    console.groupCollapsed('Player Data: ' + data.profile.name + '#' + data.profile.tag)
     console.log(data)
+    console.groupEnd
 }
 
 async function searchBungieUser(id) {
@@ -406,7 +451,63 @@ async function fetchFullEmblem(hash) {
     return 'https://bungie.net' + json.Response.secondarySpecial
 }
 
-function generateSectors(data) {
+function generatePlayerBadge() {
+    var badge = document.createElement('entry')
+
+    badge.innerHTML = `
+        <header style="background-image: url('https://bungie.net` + data.profile.emblem + `');">
+            ` + data.profile.name + `#` + data.profile.tag + `
+        </header>
+        <content>
+            <row class="th">
+                <cell>STATS</cell>
+                <cell>LEGEND</cell>
+                <cell>MASTER</cell>
+            </row>
+            <hr>
+            <row>
+                <cell>Clears</cell>
+                <cell>` + data.statistic.legend.completed + `</cell>
+                <cell>` + data.statistic.master.completed + `</cell>
+            </row>
+            <row>
+                <cell>Fastest</cell>
+                <cell>` + formatTime(Math.min(data.statistic.legend.fastest, data.statistic.legend.fastestFlawless)) + `</cell>
+                <cell>` + formatTime(Math.min(data.statistic.master.fastest, data.statistic.master.fastestFlawless)) + `</cell>
+            </row>
+            <row>
+                <cell>Efficiency</cell>
+                <cell>` + data.statistic.legend.efficiency + `</cell>
+                <cell>` + data.statistic.master.efficiency + `</cell>
+            </row>
+            <row>
+                <cell>Highscore</cell>
+                <cell>` + data.statistic.legend.highscore + `</cell>
+                <cell>` + data.statistic.master.highscore + `</cell>
+            </row>
+            <hr>
+            <row class="th">
+                <cell>OVERVIEW</cell>
+            </row>
+            <hr>
+            <row>
+                <cell>Runs</cell>
+                <cell>` + data.statistic.entered + `</cell>
+            </row>
+            <row>
+                <cell>Clears</cell>
+                <cell>` + (data.statistic.legend.completed + data.statistic.master.completed) + `</cell>
+            </row>
+            <row>
+                <cell>Total Time</cell>
+                <cell>` + formatTime(data.statistic.timeTotal) + `</cell>
+            </row>
+        </content>`
+
+    document.body.querySelector('sectors').append(badge)
+}
+
+function generateSectors() {
     // Loop generate sectors
     for (sector in data.sectors) {
         var entry = document.createElement('entry')
@@ -417,9 +518,10 @@ function generateSectors(data) {
             fastest: data.sectors[sector].fastest || "None",
             fastestFlawless: data.sectors[sector].fastestFlawless || "None",
             header: data.sectors[sector].header,
-            kills: data.sectors[sector].kills || '—',
-            deaths: data.sectors[sector].deaths || '—',
-            highscore: data.sectors[sector].highscore || '—',
+            kills: data.sectors[sector].kills || 0,
+            deaths: data.sectors[sector].deaths || 0,
+            efficiency: ((data.sectors[sector].kills || 0) / (data.sectors[sector].deaths || 1)).toFixed(2).replace(/[.,]00$/, '') || 0,
+            highscore: data.sectors[sector].highscore || 0,
             timeTotal: data.sectors[sector].timeTotal || '—'
         }
 
@@ -428,7 +530,7 @@ function generateSectors(data) {
                 ` + entry.data.name + `
             </header>
             <content>
-                <row>
+                <row class="th">
                     <cell>STATS</cell>
                     <cell>CLEARS</cell>
                     <cell>FASTEST</cell>
@@ -445,7 +547,7 @@ function generateSectors(data) {
                     <cell>` + formatTime(entry.data.fastestFlawless) + `</cell>
                 </row>
                 <hr>
-                <row>
+                <row class="th">
                     <cell>GENERAL</cell>
                 </row>
                 <hr>
@@ -456,6 +558,10 @@ function generateSectors(data) {
                 <row>
                     <cell>Deaths</cell>
                     <cell>` + entry.data.deaths + `</cell>
+                </row>
+                <row>
+                    <cell>Efficiency</cell>
+                    <cell>` + entry.data.efficiency + `</cell>
                 </row>
                 <row>
                     <cell>Score</cell>
