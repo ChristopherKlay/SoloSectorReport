@@ -7,7 +7,7 @@ var system = {
 }
 
 // Debug & Testing
-var debug = true
+var debug = false
 if (debug) {
     // Replace api key for local hosting
     system.api.key = '6e9f3a1c829c483f972d8b69f7483519'
