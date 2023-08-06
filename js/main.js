@@ -7,14 +7,13 @@ var system = {
 }
 
 // Debug & Testing
-var debug = false
+var debug = true
 if (debug) {
     // Replace api key for local hosting
     system.api.key = '6e9f3a1c829c483f972d8b69f7483519'
 }
 
-// Main Storage
-var data = {}
+// Template
 var template = {
     profile: {},
     statistic: {
@@ -271,12 +270,16 @@ var template = {
     }
 }
 
+
 function performSearch(e) {
     // Disable & hide search
     e.search.disabled = true
 
     // Hide sector overview
     document.querySelector('sectors').style.display = 'none'
+
+    // Create new clone of template
+    data = JSON.parse(JSON.stringify(template))
 
     // Get data
     searchBungieUser(e)
@@ -413,8 +416,6 @@ async function searchBungieUser(id) {
 
     // Check if ID exists
     if (json.Response && json.Response.length > 0) {
-        // Create new clone of template
-        data = JSON.parse(JSON.stringify(template))
 
         // Remove sectors content
         document.querySelector('sectors').replaceChildren()
@@ -459,7 +460,7 @@ async function fetchFullEmblem(hash) {
     return 'https://bungie.net' + json.Response.secondarySpecial
 }
 
-function generatePlayerBadge() {
+async function generatePlayerBadge() {
     var badge = document.createElement('entry')
 
     badge.innerHTML = `
@@ -515,7 +516,7 @@ function generatePlayerBadge() {
     document.body.querySelector('sectors').append(badge)
 }
 
-function generateSectors() {
+async function generateSectors() {
     // Loop generate sectors
     for (sector in data.sectors) {
         var entry = document.createElement('entry')
