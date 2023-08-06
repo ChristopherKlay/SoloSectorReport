@@ -1,7 +1,8 @@
 # Solo Sector Report
 
-## Live Version
-[SoloSectorReport](https://christopherklay.github.io/SoloSectorReport/)
+## Links
+- [SoloSectorReport](https://christopherklay.github.io/SoloSectorReport/)
+- [Changelog](https://github.com/ChristopherKlay/SoloSectorReport/blob/main/changelog.md)
 
 ## Info
 Similar to [Dungeon Report](https://dungeon.report/) and [Raid Report](https://raid.report/), Solo Sector Report aims at providing a quick, but detailed overview of a given users solo lost sector runs in Destiny 2.
