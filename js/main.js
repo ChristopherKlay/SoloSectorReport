@@ -6,17 +6,11 @@ var system = {
     }
 }
 
-// Debug & Testing
-var debug = false
-if (debug) {
-    // Replace api key for local hosting
-    system.api.key = '6e9f3a1c829c483f972d8b69f7483519'
-}
-
 // Template
 var template = {
     profile: {},
     statistic: {
+        entered: 0,
         legend: {
             completed: 0,
             flawless: 0
@@ -312,52 +306,59 @@ async function getProfileData(membershipId, membershipType) {
     }
 
     // Player statistics
-    data.statistic.entered = sectorData.length
+    data.statistic.enteredTotal = sectorData.length
 
     // Loop runs
     for (var i = sectorData.length - 1; i >= 0; i--) {
         // Check if solo & completed
-        if (sectorData[i].values.playerCount.basic.value == '1' && sectorData[i].values.completed.basic.value == '1') {
-            // Loop sectors
-            for (sector in data.sectors) {
-                if (sector.includes(sectorData[i].activityDetails.directorActivityHash)) {
-                    // Cleared Sector
-                    data.statistic[data.sectors[sector].difficulty].completed = data.statistic[data.sectors[sector].difficulty].completed + 1
-                    data.sectors[sector].completed = typeof data.sectors[sector].completed !== 'undefined' ? data.sectors[sector].completed + 1 : 1
+        if (sectorData[i].values.playerCount.basic.value == '1') {
 
-                    if (sectorData[i].values.deaths.basic.value == 0) {
-                        // Flawless
-                        data.statistic[data.sectors[sector].difficulty].flawless = data.statistic[data.sectors[sector].difficulty].flawless + 1
-                        data.sectors[sector].flawless = typeof data.sectors[sector].flawless !== 'undefined' ? data.sectors[sector].flawless + 1 : 1
+            // Add attempt
+            data.statistic.entered++
 
-                        // Clear time per pun (Flawless)
-                        if (!data.sectors[sector].fastestFlawless || sectorData[i].values.timePlayedSeconds.basic.value < data.sectors[sector].fastest) {
-                            data.sectors[sector].fastestFlawless = sectorData[i].values.timePlayedSeconds.basic.value
+            if (sectorData[i].values.completed.basic.value == '1') {
+                // Loop sectors
+                for (sector in data.sectors) {
+                    if (sector.includes(sectorData[i].activityDetails.directorActivityHash)) {
+                        // Cleared Sector
+                        data.statistic[data.sectors[sector].difficulty].completed = data.statistic[data.sectors[sector].difficulty].completed + 1
+                        data.sectors[sector].completed = typeof data.sectors[sector].completed !== 'undefined' ? data.sectors[sector].completed + 1 : 1
+
+                        if (sectorData[i].values.deaths.basic.value == 0) {
+                            // Flawless
+                            data.statistic[data.sectors[sector].difficulty].flawless = data.statistic[data.sectors[sector].difficulty].flawless + 1
+                            data.sectors[sector].flawless = typeof data.sectors[sector].flawless !== 'undefined' ? data.sectors[sector].flawless + 1 : 1
+
+                            // Clear time per pun (Flawless)
+                            if (!data.sectors[sector].fastestFlawless || sectorData[i].values.timePlayedSeconds.basic.value < data.sectors[sector].fastest) {
+                                data.sectors[sector].fastestFlawless = sectorData[i].values.timePlayedSeconds.basic.value
+                            }
+                        } else {
+                            // Clear time per pun (Flawed)
+                            if (!data.sectors[sector].fastest || sectorData[i].values.timePlayedSeconds.basic.value < data.sectors[sector].fastest) {
+                                data.sectors[sector].fastest = sectorData[i].values.timePlayedSeconds.basic.value
+                            }
                         }
-                    } else {
-                        // Clear time per pun (Flawed)
-                        if (!data.sectors[sector].fastest || sectorData[i].values.timePlayedSeconds.basic.value < data.sectors[sector].fastest) {
-                            data.sectors[sector].fastest = sectorData[i].values.timePlayedSeconds.basic.value
+
+                        // General stats
+                        data.sectors[sector].kills = typeof data.sectors[sector].kills !== 'undefined' ? data.sectors[sector].kills + sectorData[i].values.kills.basic.value : sectorData[i].values.kills.basic.value
+                        data.sectors[sector].deaths = typeof data.sectors[sector].deaths !== 'undefined' ? data.sectors[sector].deaths + sectorData[i].values.deaths.basic.value : sectorData[i].values.deaths.basic.value
+                        data.sectors[sector].timeTotal = typeof data.sectors[sector].timeTotal !== 'undefined' ? data.sectors[sector].timeTotal + sectorData[i].values.timePlayedSeconds.basic.value : sectorData[i].values.timePlayedSeconds.basic.value
+
+                        // Highscore
+                        if (!data.sectors[sector].highscore || sectorData[i].values.score.basic.value > data.sectors[sector].highscore) {
+                            data.sectors[sector].highscore = sectorData[i].values.score.basic.value
                         }
+
+                        // Remove from results
+                        sectorData.splice(i, 1)
+
+                        break
                     }
-
-                    // General stats
-                    data.sectors[sector].kills = typeof data.sectors[sector].kills !== 'undefined' ? data.sectors[sector].kills + sectorData[i].values.kills.basic.value : sectorData[i].values.kills.basic.value
-                    data.sectors[sector].deaths = typeof data.sectors[sector].deaths !== 'undefined' ? data.sectors[sector].deaths + sectorData[i].values.deaths.basic.value : sectorData[i].values.deaths.basic.value
-                    data.sectors[sector].timeTotal = typeof data.sectors[sector].timeTotal !== 'undefined' ? data.sectors[sector].timeTotal + sectorData[i].values.timePlayedSeconds.basic.value : sectorData[i].values.timePlayedSeconds.basic.value
-
-                    // Highscore
-                    if (!data.sectors[sector].highscore || sectorData[i].values.score.basic.value > data.sectors[sector].highscore) {
-                        data.sectors[sector].highscore = sectorData[i].values.score.basic.value
-                    }
-
-                    // Remove from results
-                    sectorData.splice(i, 1)
-
-                    break
                 }
             }
         } else {
+            // Remove from results
             sectorData.splice(i, 1)
         }
     }
@@ -399,6 +400,7 @@ async function getProfileData(membershipId, membershipType) {
     // Generate overview
     generatePlayerBadge()
     generateSectors()
+    generateDisclaimer()
 
     // Log full player data
     console.groupCollapsed('Player Data: ' + data.profile.name + '#' + data.profile.tag)
@@ -534,6 +536,10 @@ async function generateSectors() {
             timeTotal: data.sectors[sector].timeTotal || '—'
         }
 
+        // Set attributes
+        entry.setAttribute('difficulty', data.sectors[sector].difficulty)
+
+        // Set content
         entry.innerHTML = `
             <header style="background-image: url('` + entry.data.header + `');">
                 ` + entry.data.name + `
@@ -590,6 +596,30 @@ async function generateSectors() {
 
     // Re-enable search
     document.querySelector('#search').disabled = false
+}
+
+async function generateDisclaimer() {
+    var disclaimer = document.createElement('entry')
+
+    disclaimer.innerHTML = `
+        <header style="background-image: url('https://help.bungie.net/hc/article_attachments/360069223412/Network_Troubleshooting_Guided_Support-_1_.jpg');">
+            Disclaimer
+        </header>
+        <content>
+            <row class="th">
+                <cell>INFO</cell>
+            </row>
+            <hr>
+            <row>
+                <cell>
+                    Bungies API currently only provides data for Lost Sector activities completed since the release of Witch Queen.
+                    <br><br>
+                    Any Lost Sector runs done with a fireteam are not included in this sites statistic.
+                </cell>
+            </row>
+        </content>`
+
+    document.body.querySelector('sectors').append(disclaimer)
 }
 
 function formatTime(t) {
